@@ -15,10 +15,9 @@ from tensorflow.keras.optimizers import RMSprop
 '''Importing the EMNIST letters'''
 from scipy import io as sio
 
-batch_size = 1000
-# num_classes = 10
+batch_size = 128
 num_classes = 26
-epochs = 1000
+epochs = 20
 
 # the data, split between train and test sets
 # (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -32,8 +31,12 @@ epochs = 1000
 # print(x_train.shape[0], 'train samples')
 # print(x_test.shape[0], 'test samples')
 
+# # convert class vectors to binary class matrices
+# y_train = tf.keras.utils.to_categorical(y_train, num_classes)
+# y_test = tf.keras.utils.to_categorical(y_test, num_classes)
 
-# https://stackoverflow.com/questions/51125969/loading-emnist-letters-dataset/53547262#53547262
+
+# # https://stackoverflow.com/questions/51125969/loading-emnist-letters-dataset/53547262#53547262
 mat = sio.loadmat('emnist-letters.mat')
 data = mat['dataset']
 
@@ -56,9 +59,9 @@ y_test = tf.keras.utils.to_categorical(y_test - 1, num_classes, dtype='float32')
 y_val = tf.keras.utils.to_categorical(y_val - 1, num_classes, dtype='float32')
 
 model = Sequential()
-model.add(Dense(512, activation='tanh', input_shape=(784,)))
+model.add(Dense(512, activation='relu', input_shape=(784,)))
 model.add(Dropout(0.2))
-model.add(Dense(512, activation='tanh'))
+model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
 model.add(Dense(num_classes, activation='softmax'))
 
@@ -68,20 +71,11 @@ model.compile(loss='categorical_crossentropy',
               optimizer=RMSprop(),
               metrics=['accuracy'])
 
-
-# https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping
-earlyStop = tf.keras.callbacks.EarlyStopping(
-    monitor='val_loss', min_delta=0.001, patience=10, verbose=0, mode='auto',
-    baseline=None, restore_best_weights=False
-)
-
 history = model.fit(x_train, y_train,
                     batch_size=batch_size,
-                    epochs=epochs, callbacks=[earlyStop],
+                    epochs=epochs,
                     verbose=1,
-                    validation_data=(x_val, y_val)
-                    )
+                    validation_data=(x_test, y_test))
 score = model.evaluate(x_test, y_test, verbose=0)
-
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
